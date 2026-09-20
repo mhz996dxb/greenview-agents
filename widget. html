@@ -1,0 +1,74 @@
+<div id="gv-chat-widget">
+  <button id="gv-chat-toggle" aria-label="Open chat">💬</button>
+  <div id="gv-chat-panel" style="display:none;">
+    <div id="gv-chat-header">
+      <span>🌿 GreenView Assistant</span>
+      <button id="gv-chat-close">×</button>
+    </div>
+    <div id="gv-chat-messages"></div>
+    <div id="gv-chat-input-wrap">
+      <input id="gv-chat-input" placeholder="Ask about plants..." />
+      <button id="gv-chat-send">Send</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  #gv-chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: system-ui, sans-serif; }
+  #gv-chat-toggle { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #065f46, #047857); color: white; font-size: 28px; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(6, 95, 70, 0.4); }
+  #gv-chat-panel { position: absolute; bottom: 75px; right: 0; width: 350px; height: 500px; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
+  #gv-chat-header { background: linear-gradient(135deg, #065f46, #047857); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+  #gv-chat-close { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+  #gv-chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  #gv-chat-input-wrap { display: flex; padding: 12px; gap: 8px; border-top: 1px solid #e5e7eb; }
+  #gv-chat-input { flex: 1; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 20px; outline: none; }
+  #gv-chat-send { background: #065f46; color: white; border: none; padding: 0 18px; border-radius: 20px; cursor: pointer; font-weight: 600; }
+  .gv-msg-user { align-self: flex-end; background: #065f46; color: white; padding: 10px 14px; border-radius: 16px 16px 4px 16px; max-width: 80%; }
+  .gv-msg-bot { align-self: flex-start; background: #f3f4f6; padding: 10px 14px; border-radius: 16px 16px 16px 4px; max-width: 80%; color: #1f2937; }
+</style>
+
+<script>
+  (function() {
+    const WEBHOOK_URL = 'https://YOUR-N8N-DOMAIN.com/webhook/website-chat';
+    const toggle = document.getElementById('gv-chat-toggle');
+    const panel = document.getElementById('gv-chat-panel');
+    const close = document.getElementById('gv-chat-close');
+    const input = document.getElementById('gv-chat-input');
+    const send = document.getElementById('gv-chat-send');
+    const messages = document.getElementById('gv-chat-messages');
+
+    toggle.onclick = () => { panel.style.display = panel.style.display === 'none' ? 'flex' : 'none'; };
+    close.onclick = () => { panel.style.display = 'none'; };
+
+    function addMessage(text, isUser) {
+      const div = document.createElement('div');
+      div.className = isUser ? 'gv-msg-user' : 'gv-msg-bot';
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const msg = input.value.trim();
+      if (!msg) return;
+      addMessage(msg, true);
+      input.value = '';
+      addMessage('...', false);
+      const loader = messages.lastChild;
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, page: location.pathname })
+        });
+        const data = await res.json();
+        loader.textContent = data.reply || 'Sorry, try again.';
+      } catch (e) {
+        loader.textContent = 'Connection error. Please WhatsApp us.';
+      }
+    }
+
+    send.onclick = sendMessage;
+    input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+  })();
+</script>
