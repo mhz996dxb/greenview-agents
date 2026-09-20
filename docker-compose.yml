@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports: ["5678:5678"]
+    env_file: [.env]
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - GENERIC_TIMEZONE=${TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+volumes:
+  n8n_data:
