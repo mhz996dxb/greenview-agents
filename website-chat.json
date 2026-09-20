@@ -1,0 +1,59 @@
+{
+  "name": "Website Chat Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "website-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-70b-versatile",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "name": "Groq LLM",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are GreenView Nursery's AI assistant in Dubai. Help customers with plant selection, care advice for UAE climate (45°C summers), pricing, and nursery visits. Keep replies under 80 words. Mention plants are available at Al Warsan 3. Always offer WhatsApp contact for complex queries."
+        }
+      },
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.output, timestamp: new Date().toISOString() } }}"
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "Groq LLM": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+    }
+  }
+}
